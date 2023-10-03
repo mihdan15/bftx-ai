@@ -233,7 +233,7 @@ export default function Home() {
       </form>
 
       <div className="mt-10">
-        <h2 className="text-xl mb-5">All Links:</h2>
+        <h2 className="text-xl mb-5 text-white">All Links:</h2>
         {loading && <Adminload />}
         {error && <p>Error: {error.message}</p>}
         <ul>
@@ -242,7 +242,7 @@ export default function Home() {
               {Category.Links.map((link: any) => (
                 <div
                   key={link.id}
-                  className="mb-4 p-4 border rounded shadow-sm space-y-2 bg-[#535667] backdrop-filter backdrop-blur-sm"
+                  className="mb-4 p-4 border rounded shadow-sm space-y-2 bg-[#535667] backdrop-filter backdrop-blur-sm text-white"
                 >
                   <div>
                     <strong>Name:</strong> {link.name}

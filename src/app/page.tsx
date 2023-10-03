@@ -71,7 +71,9 @@ export default function Aitools() {
             width={118}
             height={118}
           />
-          <p className="text-xl mt-6">Artificial Intelligence Links</p>
+          <p className="text-xl mt-6 text-white">
+            Artificial Intelligence Links
+          </p>
           <div className="flex items-center">
             <p className="text-small p-2 text-center text-[#535667]">
               by bftx creative
@@ -80,7 +82,7 @@ export default function Aitools() {
               <Verif />
             </span>
           </div>
-          <div className="flex space-x-4 my-11">
+          <div className="flex space-x-4 my-11 text-white">
             <span>
               <FaGlobe size={26} />
             </span>
@@ -121,7 +123,7 @@ export default function Aitools() {
               }`}
               onClick={() => toggleCategory(category.id)}
             >
-              <h2 className="font-[700] text-center flex-grow text-2xl">
+              <h2 className="font-[700] text-center flex-grow text-2xl text-white">
                 {category.title}
               </h2>
               <span>
@@ -138,7 +140,7 @@ export default function Aitools() {
                 {category.Links.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center justify-center text-center text-base rounded-[18px] bg-white bg-opacity-10 p-5 hover:bg-opacity-30 transition h-[80px] font-[400]"
+                    className="flex items-center justify-center text-center text-base text-white rounded-[18px] bg-white bg-opacity-10 p-5 hover:bg-opacity-30 transition h-[80px] font-[400]"
                     onClick={() => window.open(link.url, "_blank")}
                   >
                     {link.name}
