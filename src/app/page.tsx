@@ -1,172 +1,177 @@
 "use client";
-import {
-  FaDharmachakra,
-  FaTwitter,
-  FaInstagram,
-  FaGithub,
-  FaLinkedin,
-  FaGlobe,
-} from "react-icons/fa"; // Import the icons
-import React, { useState } from "react";
-import Image from "next/image";
-import Avatar from "public/avatar.webp";
-import Link from "next/link";
+import React from "react";
 import { useQuery, gql } from "@apollo/client";
-import Load from "@/components/load";
+import {
+  FaAngleDown,
+  FaAngleUp,
+  FaInstagram,
+  FaTiktok,
+  FaGlobe,
+} from "react-icons/fa";
+import Search from "../components/search";
+import Verif from "../components/verif";
+import Image from "next/image";
+import logo from "../../public/logo.png";
+import { Load } from "@/components/skeleton";
 
-const GET_DATA = gql`
-  query MyQuery {
-    Linku {
+const GET_CATEGORIES = gql`
+  query GetCategories {
+    Categories {
       id
-      icon
-      nama
-      url
+      title
+      Links {
+        id
+        name
+        url
+      }
     }
   }
 `;
+type CategoryType = {
+  id: number;
+  title: string;
+  Links: {
+    id: number;
+    name: string;
+    url: string;
+  }[];
+};
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const { loading, error, data } = useQuery(GET_DATA);
-  const filteredLinks = data?.Linku.filter((link: any) =>
-    link.nama.toLowerCase().includes(searchQuery.toLowerCase())
+export default function Aitools() {
+  const { data, loading, error } = useQuery(GET_CATEGORIES);
+  const [expandedCategories, setExpandedCategories] = React.useState<number[]>(
+    []
   );
+  const [searchTerm, setSearchTerm] = React.useState("");
 
-  const handleSearchInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSearchQuery(event.target.value);
+  const toggleCategory = (categoryId: number) => {
+    if (expandedCategories.includes(categoryId)) {
+      setExpandedCategories((prev) => prev.filter((id) => id !== categoryId)); // collapse the category if it's already expanded
+    } else {
+      setExpandedCategories((prev) => [...prev, categoryId]); // otherwise, expand it
+    }
   };
+
+  const filteredCategories =
+    data?.Categories?.filter((category: any) =>
+      category.title.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   if (loading) return <Load />;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <div className="backdrop-filter backdrop-blur-sm bg-opacity-10 bg-gradient-to-b from-sky-800 to-slate-900 min-h-screen p-8">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="header">
-          {/* Avatar */}
-          <div className="relative mx-auto bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full w-64 h-64 mb-5 overflow-hidden shadow-sm">
-            <Link href="/admin">
-              <Image
-                src={Avatar}
-                alt="avatar"
-                layout="fill"
-                objectFit="cover"
-              />
-            </Link>
+    <div className="flex justify-center backdrop-filter backdrop-blur-sm min-h-screen p-8 transition duration-500 ease-in">
+      <div className="space-y-4 mx-auto px-4 sm:w-full md:w-4/5 lg:w-[846px]">
+        <div className="flex flex-col items-center justify-center">
+          <Image
+            src={logo}
+            alt="Logo BFTX"
+            // className="w-64 h-64"
+            width={118}
+            height={118}
+          />
+          <p className="text-xl mt-6">Artificial Intelligence Links</p>
+          <div className="flex items-center">
+            <p className="text-small p-2 text-center text-[#535667]">
+              by bftx creative
+            </p>
+            <span className="">
+              <Verif />
+            </span>
           </div>
-          <h1 className="text-3xl font-semibold mb-1 text-center">
-            Mihdan Advani
-          </h1>
-          <h2 className="text-2xl mb-2 text-center">
-            Link yang mungkin berguna buatmu
-          </h2>
-          {/* Socmed */}
-          <div className="flex mb-8 justify-center">
-            <a
-              href="https://www.twitter.com/mage_field"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-4 text-gray-300 hover:text-white "
-            >
-              <FaTwitter size={32} />
-            </a>
-            <a
-              href="https://www.instagram.com/mihdan_advani"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-4 text-gray-300 hover:text-white "
-            >
-              <FaInstagram size={32} />
-            </a>
-            <a
-              href="https://www.github.com/mihdan15"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-4 text-gray-300 hover:text-white "
-            >
-              <FaGithub size={32} />
-            </a>
-            <a
-              href="https://www.linkedin.com/in/mihdanadvani/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-4 text-gray-300 hover:text-white "
-            >
-              <FaLinkedin size={32} />
-            </a>
-            <a
-              href="https://mihdanadvani.my.id/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-4 text-gray-300 hover:text-white "
-            >
-              <FaGlobe size={32} />
-            </a>
+          <div className="flex space-x-4 my-11">
+            <span>
+              <FaGlobe size={26} />
+            </span>
+            <span>
+              <FaInstagram size={28} />
+            </span>
+            <span>
+              <FaTiktok size={26} />
+            </span>
           </div>
         </div>
-        <div className="search-container mb-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <svg
-                className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                />
-              </svg>
+        <div className="mb-5 bg-gray-800 bg-opacity-40 rounded-[18px] relative">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="text-2xl p-2 w-full h-[50px] rounded-[18px] focus:ring-0 focus:outline-none placeholder-[#535667] text-center bg-[rgba(38,42,52,0.40)] pl-5 pr-[40px]"
+          />
+          <span className="absolute top-1/2 right-4 transform -translate-y-1/2">
+            <Search />
+          </span>
+        </div>
+        {filteredCategories?.map((category: CategoryType) => (
+          <div
+            key={category.id}
+            className={`p-2 my-2 rounded-[18px] transition-colors duration-600 cursor-pointer ${
+              expandedCategories.includes(category.id)
+                ? "custom-opacity backdrop-filter backdrop-blur-sm"
+                : "bg-[#262A34]"
+            }`}
+          >
+            <div
+              className={`flex h-[60px] transition-colors rounded-[18px] duration-600 justify-between items-center p-2 ${
+                expandedCategories.includes(category.id)
+                  ? "bg-blue-600"
+                  : "bg-[#262A34]"
+              }`}
+              onClick={() => toggleCategory(category.id)}
+            >
+              <h2 className="font-[700] text-center flex-grow text-2xl">
+                {category.title}
+              </h2>
+              <span>
+                {expandedCategories.includes(category.id) ? (
+                  <FaAngleUp size={32} />
+                ) : (
+                  <FaAngleDown size={32} />
+                )}
+              </span>
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              className="placeholder:italic text-slate-700 placeholder:text-slate-400 block bg-white w-full border border-slate-300 rounded-md py-2 pl-9 pr-3 shadow-sm focus:outline-none focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
-              placeholder="Cari yang kamu butuhkan..."
-            />{" "}
+
+            {expandedCategories.includes(category.id) && (
+              <div className="grid lg:grid-cols-3 sm:grid-cols-2 gap-4 mt-4">
+                {category.Links.map((link) => (
+                  <div
+                    key={link.id}
+                    className="flex items-center justify-center text-center text-base rounded-[18px] bg-white bg-opacity-10 p-5 hover:bg-opacity-30 transition h-[80px] font-[400]"
+                    onClick={() => window.open(link.url, "_blank")}
+                  >
+                    {link.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-        <ul className="space-y-4">
-          {filteredLinks.map((link: any, index: any) => (
-            <li key={index}>
-              <a
-                target="_blank"
-                href={link.url}
-                className="block p-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg transition text-white saturate-50 hover:saturate-100 hover:scale-105"
-              >
-                <span className="flex items-center">
-                  <span className="mr-[-5px]">
-                    {typeof link.icon === "string" &&
-                    link.icon.startsWith("https") ? (
-                      <Image
-                        src={link.icon}
-                        alt="icon"
-                        width={36}
-                        height={36}
-                        className="rounded-lg"
-                      />
-                    ) : link.icon ? (
-                      <FaDharmachakra size={36} />
-                    ) : (
-                      <FaDharmachakra size={36} />
-                    )}
-                  </span>
-                  <div className="w-full text-center mr-5">{link.nama}</div>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        ))}
+      </div>
+      <div className="overlap z-[-100]">
+        <img
+          className="star1"
+          alt="star1"
+          src="https://cdn.animaapp.com/projects/651ac368b8a887555f52c216/releases/651ac3a60e441fe4c98b0a49/img/star-1.svg"
+        />
+        <img
+          className="star2"
+          alt="Star"
+          src="https://cdn.animaapp.com/projects/651ac368b8a887555f52c216/releases/651ac3a60e441fe4c98b0a49/img/star-2.png"
+        />
       </div>
     </div>
+    // <div className="flex justify-center mt-10">
+    //   <div className="w-7/12">
+    //     {data?.Categories?.map((category: CategoryType) => (
+    //       <Dropdown
+    //         key={category.id}
+    //         title={category.title}
+    //         Links={category.Links}
+    //       />
+    //     ))}
+    //   </div>
+    // </div>
   );
 }

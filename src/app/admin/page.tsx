@@ -1,331 +1,290 @@
 "use client";
-import Link from "next/link";
+import { useState } from "react";
 import { gql, useMutation, useQuery } from "@apollo/client";
-import { useEffect, useState, useRef } from "react";
+import { Adminload } from "@/components/skeleton";
 import Alertsccs from "@/components/alertsccs";
 
-export default function Home() {
-  const [namaLink, setNamaLink] = useState("");
-  const [urlLink, setUrlLink] = useState("");
-  const [iconLink, setIconLink] = useState("");
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertColor, setAlertColor] = useState("");
-  const [editMode, setEditMode] = useState(false);
-  const [editLink, setEditLink] = useState({
-    id: null,
-    nama: "",
-    url: "",
-    icon: "",
-  });
-
-  // Query Add Data
-  const ADD_LINK_MUTATION = gql`
-    mutation Insert_Linku(
-      $nama_link: String!
-      $url_link: String!
-      $icon_link: String!
+const ADD_LINK = gql`
+  mutation AddLink($name: String!, $url: String!, $categoryId: Int!) {
+    insert_Links_one(
+      object: { name: $name, url: $url, category_id: $categoryId }
     ) {
-      insert_Linku(
-        objects: { nama: $nama_link, url: $url_link, icon: $icon_link }
-      ) {
-        returning {
-          id
-          nama
-          url
-          icon
-        }
-      }
+      id
+      name
+      url
     }
-  `;
+  }
+`;
 
-  //Query Get Data
-  const GET_DATA = gql`
-    query MyQuery {
-      Linku {
+const GET_LINKS = gql`
+  query GetLinks {
+    Categories {
+      id
+      title
+      Links {
         id
-        icon
-        nama
+        name
         url
       }
     }
-  `;
+  }
+`;
 
-  const EDIT_DATA_MUTATION = gql`
-    mutation UpdateLinku(
-      $id: Int!
-      $nama_link: String!
-      $url_link: String!
-      $icon_link: String!
+const UPDATE_LINK = gql`
+  mutation UpdateLink(
+    $id: Int!
+    $name: String!
+    $url: String!
+    $categoryId: Int!
+  ) {
+    update_Links_by_pk(
+      pk_columns: { id: $id }
+      _set: { name: $name, url: $url, category_id: $categoryId }
     ) {
-      update_Linku(
-        where: { id: { _eq: $id } }
-        _set: { nama: $nama_link, url: $url_link, icon: $icon_link }
-      ) {
-        affected_rows
-      }
+      id
+      name
+      url
     }
-  `;
+  }
+`;
 
-  const DELETE_DATA = gql`
-    mutation DeleteData($id: Int!) {
-      delete_Linku(where: { id: { _eq: $id } }) {
-        affected_rows
-      }
+const DELETE_LINK = gql`
+  mutation DeleteLink($id: Int!) {
+    delete_Links_by_pk(id: $id) {
+      id
     }
-  `;
+  }
+`;
 
-  const { loading, error, data, refetch } = useQuery(GET_DATA);
+export default function Home() {
+  const [newLinkName, setNewLinkName] = useState("");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | number>(
+    "default"
+  );
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertColor, setAlertColor] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
 
-  const [addData] = useMutation(ADD_LINK_MUTATION, {
-    onCompleted: () => {
-      setAlertMessage("Berhasil Menambahkan Link Baru");
-      setShowAlert(true);
-      setAlertColor("green");
-      setTimeout(() => {
-        setShowAlert(false);
-      }, 4000);
-      console.log("Data inserted successfully");
-      setNamaLink("");
-      setUrlLink("");
-      setIconLink("");
-      refetch();
-    },
-    onError: (error) => {
-      console.error("Error adding data:", error);
-    },
-  });
+  const [addLink] = useMutation(ADD_LINK);
+  const { data, loading, error, refetch } = useQuery(GET_LINKS);
+  const [updateLink] = useMutation(UPDATE_LINK);
+  const [deleteLink] = useMutation(DELETE_LINK);
 
-  const handleTambah = async () => {
-    if (namaLink === "" || urlLink === "") {
-      setAlertMessage("Nama atau URL tidak boleh kosong!");
-      setShowAlert(true);
-      setAlertColor("red");
-      setTimeout(() => {
-        setShowAlert(false);
-      }, 1000);
+  const handleSubmitLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCategory || selectedCategory === "default") {
+      alert("Please select a category first.");
       return;
     }
-    try {
-      await addData({
-        variables: {
-          nama_link: namaLink,
-          url_link: urlLink,
-          icon_link: iconLink,
-        },
-      });
-    } catch (error) {
-      console.error("Error adding data:", error);
-    }
-  };
-
-  const [editData] = useMutation(EDIT_DATA_MUTATION, {
-    onCompleted: () => {
-      setAlertMessage("Berhasil Mengedit Link");
-      setShowAlert(true);
-      setAlertColor("green");
-      setTimeout(() => {
-        setShowAlert(false);
-      }, 4000);
-      setEditMode(false);
-      refetch();
-    },
-    onError: (error) => {
-      console.error("Error editing data:", error);
-    },
-  });
-
-  const handleEdit = (link: any) => {
-    setEditLink(link);
-    setNamaLink(link.nama);
-    setUrlLink(link.url);
-    setIconLink(link.icon || "");
-    setEditMode(true);
-  };
-
-  const handleSubmit = async () => {
-    if (editMode && editLink.id) {
+    setIsAdding(true);
+    if (isEditing && editingLinkId) {
+      displayAlert("Sedang Mengedit Tool...", "blue");
       try {
-        await editData({
+        await updateLink({
           variables: {
-            id: editLink.id,
-            nama_link: namaLink,
-            url_link: urlLink,
-            icon_link: iconLink,
+            id: editingLinkId,
+            name: newLinkName,
+            url: newLinkUrl,
+            categoryId: selectedCategory,
           },
         });
-        setNamaLink("");
-        setUrlLink("");
-        setIconLink("");
+        setIsEditing(false);
+        setEditingLinkId(null);
+        displayAlert("Berhasil Mengedit Tool", "green");
+        setNewLinkName("");
+        setNewLinkUrl("");
+        setSelectedCategory("default");
+        setIsAdding(false);
+        refetch();
       } catch (error) {
-        console.error("Error editing data:", error);
+        console.error("Failed to add link:", error);
+        displayAlert("Gagal Mengedit Tool", "red");
+        setIsEditing(false);
+        setIsAdding(false);
+        setSelectedCategory("default");
       }
     } else {
-      handleTambah();
+      displayAlert("Sedang Menambahkan Tool...", "blue");
+
+      try {
+        await addLink({
+          variables: {
+            name: newLinkName,
+            url: newLinkUrl,
+            categoryId: selectedCategory,
+          },
+        });
+        setIsEditing(false);
+        setEditingLinkId(null);
+        displayAlert("Berhasil Menambah Tools Baru", "green");
+        setNewLinkName("");
+        setNewLinkUrl("");
+        setSelectedCategory("default");
+        setIsAdding(false);
+        refetch();
+      } catch (error) {
+        console.error("Failed to add link:", error);
+      }
     }
+    setNewLinkName("");
+    setNewLinkUrl("");
   };
 
-  const [deleteData] = useMutation(DELETE_DATA, {
-    onCompleted: () => {
-      console.log("Data deleted successfully");
-      setAlertMessage("Link Anda Berhasil Dihapus");
-      setAlertColor("green");
+  const handleEdit = (link: any, category: any) => {
+    setNewLinkName(link.name);
+    setNewLinkUrl(link.url);
+    setSelectedCategory(category.id);
+    setIsEditing(true);
+    setEditingLinkId(link.id);
+    console.log("Editing link with category_id:", category.id);
+  };
 
-      setShowAlert(true);
-      setTimeout(() => {
-        setShowAlert(false);
-      }, 4000);
-      refetch();
-    },
-    onError: (error) => {
-      console.error("Error deleting data:", error);
-    },
-  });
+  const displayAlert = (message: any, color: any) => {
+    setAlertMessage(message);
+    setAlertColor(color);
+    setShowAlert(true);
 
-  const handleDelete = async (id: any) => {
+    // Anda dapat menambahkan delay untuk secara otomatis menyembunyikan alert setelah beberapa detik, misalnya:
+    setTimeout(() => {
+      setShowAlert(false);
+    }, 2000); // Alert akan otomatis menghilang setelah 5 detik
+  };
+
+  const handleDelete = async (linkId: number) => {
+    setIsDeleting(true);
+    displayAlert("Sedang Menghapus Tool...", "blue");
     try {
-      await deleteData({ variables: { id } });
+      await deleteLink({ variables: { id: linkId } });
+      displayAlert("Berhasil Menghapus Tool", "green");
+      setShowAlert(true);
+      refetch();
+      setIsDeleting(false);
+      // Opsi: Anda bisa memuat ulang data setelah menghapus atau menggunakan cache Apollo untuk memperbarui tampilan
     } catch (error) {
-      console.error("Error deleting data:", error);
+      console.error("Failed to delete link:", error);
+      displayAlert("Gagal Menghapus Tool", "red");
     }
   };
 
   return (
-    <div className="backdrop-filter backdrop-blur-sm bg-opacity-10 bg-gradient-to-b from-sky-800 to-slate-900 min-h-screen p-8 bg-svg">
+    <div className="p-8 star-bg">
       {showAlert && <Alertsccs message={alertMessage} color={alertColor} />}
-      <form className="w-full max-w-lg mx-auto">
-        <div className="flex flex-wrap -mx-3 mb-6">
-          <div className="w-full px-3">
-            <label
-              className="block tracking-wide text-white text-xs font-bold mb-2"
-              htmlFor="nama"
-            >
-              Nama Link
-            </label>
-            <input
-              className="appearance-none px-4 mb-3 leading-tight focus:outline-none focus:bg-white  placeholder:italic text-slate-700 placeholder:text-slate-400 block bg-white w-full border border-slate-300 rounded-md py-2 pl-3 pr-3 shadow-sm focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
-              id="nama"
-              type="text"
-              placeholder="Masukkan Nama Link mu..."
-              name="nama_link"
-              value={namaLink}
-              onChange={(e) => setNamaLink(e.target.value)}
-              required
-            />
-          </div>
-          <div className="w-full px-3">
-            <label
-              className="block tracking-wide text-white text-xs font-bold mb-2"
-              htmlFor="url"
-            >
-              URL
-            </label>
-            <textarea
-              className="appearance-none h-36 resize-none px-4 mb-3 leading-tight focus:outline-none focus:bg-white  placeholder:italic text-slate-700 placeholder:text-slate-400 block bg-white w-full border border-slate-300 rounded-md py-2 pl-3 pr-3 shadow-sm focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
-              id="url"
-              placeholder="Masukkan URL yang kamu tuju..."
-              name="url_link"
-              value={urlLink}
-              onChange={(e) => setUrlLink(e.target.value)}
-              required
-            />
-          </div>
-          <div className="w-full px-3">
-            <label
-              className="block tracking-wide text-white text-xs font-bold mb-2"
-              htmlFor="logo"
-            >
-              Icon (Optional)
-            </label>
-            <textarea
-              className="appearance-none h-36 resize-none px-4 mb-3 leading-tight focus:outline-none focus:bg-white  placeholder:italic text-slate-700 placeholder:text-slate-400 block bg-white w-full border border-slate-300 rounded-md py-2 pl-3 pr-3 shadow-sm focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
-              id="url"
-              placeholder="Masukkan url icon dari link mu..."
-              name="icon_link"
-              value={iconLink}
-              onChange={(e) => setIconLink(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="md:flex items-center">
-          <div className="md:w-1/3">
-            <button
-              className={`shadow ${
-                editMode
-                  ? "bg-yellow-600 hover:bg-yellow-700"
-                  : "bg-cyan-800 hover:bg-cyan-900"
-              } focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded`}
-              type="button"
-              onClick={handleSubmit}
-            >
-              {editMode ? "Edit" : "Tambah"}
-            </button>
-          </div>
-          <div className="md:w-2/3"></div>
-        </div>
+      <form onSubmit={handleSubmitLink} className="space-y-4">
+        {" "}
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="block p-2 border rounded shadow-sm w-full max-w-lg mx-auto"
+        >
+          <option value="default" disabled>
+            Select a category
+          </option>
+          {data?.Categories?.map((category: any) => (
+            <option key={category.id} value={category.id}>
+              {category.title}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          required
+          placeholder="Link Name"
+          value={newLinkName}
+          onChange={(e) => setNewLinkName(e.target.value)}
+          className="block w-full p-2 border rounded shadow-sm"
+        />
+        <input
+          type="text"
+          required
+          placeholder="Link URL"
+          value={newLinkUrl}
+          onChange={(e) => setNewLinkUrl(e.target.value)}
+          className="block w-full p-2 border rounded shadow-sm"
+        />
+        <button
+          disabled={isAdding}
+          type="submit"
+          className={`p-2 ${
+            isAdding ? "bg-blue-400" : "bg-blue-500 hover:bg-blue-600"
+          } text-white rounded shadow-sm `}
+        >
+          {isEditing ? "Update Tool" : "Add Tool"}
+        </button>
+        {isEditing && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditing(false);
+              setEditingLinkId(null);
+              setNewLinkName("");
+              setNewLinkUrl("");
+              setSelectedCategory("default");
+            }}
+            className="p-2 bg-gray-500 text-white rounded shadow-sm hover:bg-gray-600 ml-2"
+          >
+            Cancel
+          </button>
+        )}
       </form>
 
-      <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-10">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-              <th scope="col" className="px-6 py-3">
-                Nama
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Url
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Icon
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.Linku.map((link: any, index: any) => (
-              <tr
-                key={index}
-                className={`${
-                  index % 2 === 0 ? "bg-gray-800" : " bg-gray-900"
-                } border-b dark:border-gray-700`}
-              >
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  {link.nama}
-                </td>
-                <td className="px-6 py-4">
-                  {link.nama.includes("titip")
-                    ? link.url
-                    : link.url.slice(0, 100)}
-                </td>
-                <td className="px-6 py-4">
-                  {link.icon && link.icon.slice(0, 100)}
-                </td>
-                <td className="px-6 py-4">
-                  <a
-                    href="#"
-                    onClick={() => handleEdit(link)}
-                    className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                  >
-                    Edit
-                  </a>
-                  <a
-                    href="#"
-                    className="font-medium text-red-600 dark:text-red-500 hover:underline px-2"
-                    onClick={() => handleDelete(link.id)}
-                  >
-                    Delete
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-5">
-        <Link href="/">Home</Link>
+      <div className="mt-10">
+        <h2 className="text-xl mb-5">All Links:</h2>
+        {loading && <Adminload />}
+        {error && <p>Error: {error.message}</p>}
+        <ul>
+          {data?.Categories?.map((Category: any) => (
+            <li key={Category.id}>
+              {Category.Links.map((link: any) => (
+                <div
+                  key={link.id}
+                  className="mb-4 p-4 border rounded shadow-sm space-y-2 bg-[#535667] backdrop-filter backdrop-blur-sm"
+                >
+                  <div>
+                    <strong>Name:</strong> {link.name}
+                  </div>
+                  <div>
+                    <strong>URL:</strong>{" "}
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {link.url}
+                    </a>
+                  </div>
+                  <div>
+                    <strong>Category:</strong> {Category.title}
+                  </div>
+                  <div className="mt-2 space-x-2">
+                    <button
+                      className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      onClick={() => handleEdit(link, Category)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      disabled={isDeleting}
+                      className={`p-1 ${
+                        isDeleting
+                          ? "bg-red-400"
+                          : "bg-red-500 hover:bg-red-600"
+                      } text-white rounded `}
+                      onClick={() => handleDelete(link.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

@@ -1,12 +1,39 @@
 import React from "react";
 
+const colorClasses = {
+  red: {
+    text: "text-red-800",
+    border: "border-red-300",
+    bg: "bg-red-50",
+    darkText: "dark:text-red-400",
+    darkBorder: "dark:border-red-800",
+  },
+  green: {
+    text: "text-green-800",
+    border: "border-green-300",
+    bg: "bg-green-50",
+    darkText: "dark:text-green-400",
+    darkBorder: "dark:border-green-800",
+  },
+  blue: {
+    text: "text-blue-800",
+    border: "border-blue-300",
+    bg: "bg-blue-50",
+    darkText: "dark:text-blue-400",
+    darkBorder: "dark:border-blue-800",
+  },
+  // Tambahkan variasi warna lainnya jika diperlukan
+};
+
 interface Props {
   message: string;
   color: string; // Tipe data string untuk prop message
 }
 
 const Alertsccs: React.FC<Props> = ({ message, color }) => {
-  const alertClasses = `flex items-center p-4 mb-4 text-sm text-${color}-800 border border-${color}-300 rounded-lg bg-${color}-50 dark:bg-gray-800 dark:text-${color}-400 dark:border-${color}-800`;
+  const currentColor =
+    colorClasses[color as keyof typeof colorClasses] || colorClasses.red;
+  const alertClasses = `fixed flex items-center p-4 mb-4 text-sm rounded z-[999] ${currentColor.text} ${currentColor.border} ${currentColor.bg} dark:bg-gray-800 ${currentColor.darkText} ${currentColor.darkBorder}`;
   return (
     <div className={alertClasses} role="alert">
       <svg

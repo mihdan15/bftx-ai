@@ -1,14 +1,17 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import Footer from "@/components/footer";
+import { Plus_Jakarta_Sans } from "next/font/google";
+// import Footer from "@/components/footer";
 import Providers from "@/components/providers";
 
-const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600"] });
+const poppins = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "Mihdan Advani - Link",
-  description: "Kumpulan Link Berguna untukmu",
+  title: "BFTX Agency - AI Links",
+  description: "Kumpulan Link AI ",
 };
 
 export default function RootLayout({
@@ -22,8 +25,8 @@ export default function RootLayout({
     // </html>
     <html lang="en">
       <body className={poppins.className}>
+        <div className="star-bg"></div>
         <Providers>{children}</Providers>
-        <Footer />
       </body>
     </html>
   );
