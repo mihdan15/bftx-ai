@@ -100,7 +100,7 @@ export default function Aitools() {
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="text-2xl p-2 w-full h-[50px] rounded-[18px] focus:ring-0 focus:outline-none placeholder-[#535667] text-center bg-[rgba(38,42,52,0.40)] pl-5 pr-[40px]"
+            className="text-2xl p-2 w-full h-[50px] rounded-[18px] focus:ring-0 focus:outline-none placeholder-[#535667] text-white text-center bg-[rgba(38,42,52,0.40)] pl-5 pr-[40px]"
           />
           <span className="absolute top-1/2 right-4 transform -translate-y-1/2">
             <Search />
@@ -116,7 +116,7 @@ export default function Aitools() {
             }`}
           >
             <div
-              className={`flex h-[60px] transition-colors rounded-[18px] duration-600 justify-between items-center p-2 ${
+              className={`flex h-[60px] transition-colors rounded-[18px] duration-600 justify-between items-center p-2 text-white ${
                 expandedCategories.includes(category.id)
                   ? "bg-blue-600"
                   : "bg-[#262A34]"
