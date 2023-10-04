@@ -25,6 +25,7 @@ const GET_LINKS = gql`
         id
         name
         url
+        created_at
       }
     }
   }
@@ -69,6 +70,8 @@ export default function Home() {
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [orderBy, setOrderBy] = useState<"name" | "date">("name");
 
   const [addLink] = useMutation(ADD_LINK);
   const { data, loading, error, refetch } = useQuery(GET_LINKS);
@@ -171,6 +174,27 @@ export default function Home() {
     }
   };
 
+  const displayedCategories = data?.Categories?.filter(
+    (category: any) =>
+      filterCategory === "all" || category.id === parseInt(filterCategory)
+  ).map((category: any) => {
+    if (orderBy === "name") {
+      return {
+        ...category,
+        Links: [...category.Links].sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    } else if (orderBy === "date" && category.Links[0]?.created_at) {
+      return {
+        ...category,
+        Links: [...category.Links].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
+      };
+    }
+    return category;
+  });
+
   return (
     <div className="p-8 star-bg">
       {showAlert && <Alertsccs message={alertMessage} color={alertColor} />}
@@ -234,10 +258,39 @@ export default function Home() {
 
       <div className="mt-10">
         <h2 className="text-xl mb-5 text-white">All Links:</h2>
+        <div className="grid lg:grid-cols-2 sm:grid-cols-1 gap-4 my-5 text-white">
+          <div className="flex items-center justify-center ">
+            {" "}
+            <label>Filter Category: </label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="ml-2 p-2 border rounded shadow-sm w-full max-w-lg"
+            >
+              <option value="all">All Categories</option>
+              {data?.Categories?.map((category: any) => (
+                <option key={category.id} value={category.id}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center justify-center">
+            <label>Order By: </label>
+            <select
+              value={orderBy}
+              onChange={(e) => setOrderBy(e.target.value as any)}
+              className=" ml-2 p-2 border rounded shadow-sm"
+            >
+              <option value="name">Name</option>
+              <option value="date">Date Added</option>{" "}
+            </select>
+          </div>
+        </div>
         {loading && <Adminload />}
         {error && <p>Error: {error.message}</p>}
         <ul>
-          {data?.Categories?.map((Category: any) => (
+          {displayedCategories?.map((Category: any) => (
             <li key={Category.id}>
               {Category.Links.map((link: any) => (
                 <div

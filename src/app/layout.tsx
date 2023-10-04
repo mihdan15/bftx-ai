@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 // import Footer from "@/components/footer";
 import Providers from "@/components/providers";
+import Background from "@/components/background";
 
 const poppins = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -25,8 +26,9 @@ export default function RootLayout({
     // </html>
     <html lang="en">
       <body className={poppins.className}>
-        <div className="star-bg"></div>
+        {/* <div className="star-bg"></div> */}
         <Providers>{children}</Providers>
+        <Background />
       </body>
     </html>
   );

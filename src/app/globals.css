@@ -39,11 +39,11 @@ body {
   }
 }
 
-.star-bg {
+/* .star-bg {
   background-image: url("../../public/starup.png"), url("../../public/star.png");
   background-repeat: no-repeat;
   background-position: top left, bottom right;
-}
+} */
 
 .custom-opacity::before {
   content: "";
@@ -56,6 +56,15 @@ body {
   opacity: 0.5;
   z-index: -1;
   border-radius: 18px;
+}
+
+.overlap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -100;
 }
 
 .star1 {

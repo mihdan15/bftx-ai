@@ -16,7 +16,7 @@ import { Load } from "@/components/skeleton";
 
 const GET_CATEGORIES = gql`
   query GetCategories {
-    Categories {
+    Categories(order_by: { title: asc }) {
       id
       title
       Links {
@@ -43,19 +43,63 @@ export default function Aitools() {
     []
   );
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [expandedBySearch, setExpandedBySearch] =
+    React.useState<boolean>(false);
 
   const toggleCategory = (categoryId: number) => {
-    if (expandedCategories.includes(categoryId)) {
-      setExpandedCategories((prev) => prev.filter((id) => id !== categoryId)); // collapse the category if it's already expanded
-    } else {
-      setExpandedCategories((prev) => [...prev, categoryId]); // otherwise, expand it
-    }
+    setExpandedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+    setExpandedBySearch(false); // Pengguna telah memodifikasi ekspansi secara manual
   };
 
   const filteredCategories =
-    data?.Categories?.filter((category: any) =>
-      category.title.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    data?.Categories?.filter((category: CategoryType) => {
+      // Cek apakah judul kategori cocok
+      if (category.title.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return true;
+      }
+
+      // Cek apakah salah satu tautan dalam kategori cocok
+      for (let link of category.Links) {
+        if (link.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return true;
+        }
+      }
+
+      return false;
+    }) || [];
+
+  React.useEffect(() => {
+    if (searchTerm.length === 0) {
+      if (expandedBySearch) {
+        setExpandedCategories([]); // Reset semua kategori yang diperluas oleh pencarian
+        setExpandedBySearch(false);
+      }
+      return; // Keluar dari useEffect
+    }
+
+    const matchedCat = filteredCategories?.find((category: CategoryType) =>
+      category.Links.find((link) =>
+        link.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+
+    if (matchedCat) {
+      setExpandedCategories((prev) => {
+        if (!prev.includes(matchedCat.id)) {
+          setExpandedBySearch(true);
+          return [...prev, matchedCat.id];
+        } else {
+          return prev;
+        }
+      });
+    }
+  }, [searchTerm, filteredCategories]);
 
   if (loading) return <Load />;
   if (error) return <p>Error: {error.message}</p>;
@@ -83,15 +127,15 @@ export default function Aitools() {
             </span>
           </div>
           <div className="flex space-x-4 my-11 text-white">
-            <span>
+            <a href="#">
               <FaGlobe size={26} />
-            </span>
-            <span>
+            </a>
+            <a href="https://www.instagram.com/bftx.creative/" target="_blank">
               <FaInstagram size={28} />
-            </span>
-            <span>
+            </a>
+            <a href="#">
               <FaTiktok size={26} />
-            </span>
+            </a>
           </div>
         </div>
         <div className="mb-5 bg-gray-800 bg-opacity-40 rounded-[18px] relative">
@@ -106,74 +150,53 @@ export default function Aitools() {
             <Search />
           </span>
         </div>
-        {filteredCategories?.map((category: CategoryType) => (
-          <div
-            key={category.id}
-            className={`p-2 my-2 rounded-[18px] transition-colors duration-600 cursor-pointer ${
-              expandedCategories.includes(category.id)
-                ? "custom-opacity backdrop-filter backdrop-blur-sm"
-                : "bg-[#262A34]"
-            }`}
-          >
+        {filteredCategories?.map((category: CategoryType) => {
+          return (
             <div
-              className={`flex h-[60px] transition-colors rounded-[18px] duration-600 justify-between items-center p-2 text-white ${
+              key={category.id}
+              className={`p-2 my-2 rounded-[18px] transition-colors duration-600 cursor-pointer ${
                 expandedCategories.includes(category.id)
-                  ? "bg-blue-600"
+                  ? "custom-opacity backdrop-filter backdrop-blur-sm"
                   : "bg-[#262A34]"
               }`}
-              onClick={() => toggleCategory(category.id)}
             >
-              <h2 className="font-[700] text-center flex-grow text-2xl text-white">
-                {category.title}
-              </h2>
-              <span>
-                {expandedCategories.includes(category.id) ? (
-                  <FaAngleUp size={32} />
-                ) : (
-                  <FaAngleDown size={32} />
-                )}
-              </span>
-            </div>
-
-            {expandedCategories.includes(category.id) && (
-              <div className="grid lg:grid-cols-3 sm:grid-cols-2 gap-4 mt-4">
-                {category.Links.map((link) => (
-                  <div
-                    key={link.id}
-                    className="flex items-center justify-center text-center text-base text-white rounded-[18px] bg-white bg-opacity-10 p-5 hover:bg-opacity-30 transition h-[80px] font-[400]"
-                    onClick={() => window.open(link.url, "_blank")}
-                  >
-                    {link.name}
-                  </div>
-                ))}
+              <div
+                className={`flex h-[60px] transition-colors rounded-[18px] duration-600 justify-between items-center p-2 text-white ${
+                  expandedCategories.includes(category.id)
+                    ? "bg-blue-600"
+                    : "bg-[#262A34]"
+                }`}
+                onClick={() => toggleCategory(category.id)}
+              >
+                <h2 className="font-[700] text-center flex-grow text-2xl text-white">
+                  {category.title}
+                </h2>
+                <span>
+                  {expandedCategories.includes(category.id) ? (
+                    <FaAngleUp size={32} />
+                  ) : (
+                    <FaAngleDown size={32} />
+                  )}
+                </span>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="overlap z-[-100]">
-        <img
-          className="star1"
-          alt="star1"
-          src="https://cdn.animaapp.com/projects/651ac368b8a887555f52c216/releases/651ac3a60e441fe4c98b0a49/img/star-1.svg"
-        />
-        <img
-          className="star2"
-          alt="Star"
-          src="https://cdn.animaapp.com/projects/651ac368b8a887555f52c216/releases/651ac3a60e441fe4c98b0a49/img/star-2.png"
-        />
+
+              {expandedCategories.includes(category.id) && (
+                <div className="grid lg:grid-cols-3 sm:grid-cols-2 gap-4 mt-4 cursor-default">
+                  {category.Links.map((link) => (
+                    <div
+                      key={link.id}
+                      className="flex items-center justify-center text-center text-base text-white rounded-[18px] bg-white bg-opacity-10 p-5 hover:bg-opacity-30 transition h-[80px] font-[400] cursor-pointer"
+                      onClick={() => window.open(link.url, "_blank")}
+                    >
+                      {link.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
-    // <div className="flex justify-center mt-10">
-    //   <div className="w-7/12">
-    //     {data?.Categories?.map((category: CategoryType) => (
-    //       <Dropdown
-    //         key={category.id}
-    //         title={category.title}
-    //         Links={category.Links}
-    //       />
-    //     ))}
-    //   </div>
-    // </div>
   );
 }
