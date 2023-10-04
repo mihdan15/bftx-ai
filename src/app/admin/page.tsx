@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { Adminload } from "@/components/skeleton";
 import Alertsccs from "@/components/alertsccs";
@@ -72,6 +73,7 @@ export default function Home() {
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [orderBy, setOrderBy] = useState<"name" | "date">("name");
+  const [sliceLength, setSliceLength] = useState(30);
 
   const [addLink] = useMutation(ADD_LINK);
   const { data, loading, error, refetch } = useQuery(GET_LINKS);
@@ -195,6 +197,28 @@ export default function Home() {
     return category;
   });
 
+  useEffect(() => {
+    const updateSliceLength = () => {
+      if (window.innerWidth > 768) {
+        // misalnya untuk breakpoint layar besar
+        setSliceLength(100);
+      } else {
+        setSliceLength(30);
+      }
+    };
+
+    // Saat komponen dimuat, periksa lebar layar dan atur sliceLength
+    updateSliceLength();
+
+    // Tambahkan event listener untuk perubahan ukuran layar
+    window.addEventListener("resize", updateSliceLength);
+
+    // Bersihkan event listener saat komponen dilepas
+    return () => {
+      window.removeEventListener("resize", updateSliceLength);
+    };
+  }, []);
+
   return (
     <div className="p-8 star-bg">
       {showAlert && <Alertsccs message={alertMessage} color={alertColor} />}
@@ -308,7 +332,7 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:underline"
                     >
-                      {link.url}
+                      {link.url.slice(0, sliceLength)}...
                     </a>
                   </div>
                   <div>
@@ -338,6 +362,14 @@ export default function Home() {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="mt-5">
+        <Link
+          className="rounded bg-yellow-400 hover:bg-yellow-500 w-fit p-3"
+          href="/"
+        >
+          Kembali
+        </Link>
       </div>
     </div>
   );
